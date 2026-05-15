@@ -46,3 +46,4 @@ Bộ công cụ này được phát triển **CHỈ DÀNH CHO MỤC ĐÍCH GIÁO
 *   Tác giả không chịu bất kỳ trách nhiệm pháp lý nào đối với các hành vi lạm dụng đoạn mã này để tấn công phá hoại, vi phạm pháp luật hoặc gây ảnh hưởng xấu đến hệ thống của người khác. Mọi hậu quả phát sinh do người dùng tự chịu trách nhiệm.
 
 *   ⚠️Phá mạng NHÀ NGƯỜI KHÁC ĐI TÒ ráng chịu!!!!!!!!!!⚠️
+
