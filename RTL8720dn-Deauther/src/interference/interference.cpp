@@ -72,8 +72,8 @@ static void _build_synthetic_payload(BeaconClone* t) {
     if (!t->payload) return;
 
     memcpy(t->payload, synthetic_template, tpl_len);
-    // Patch DS Parameter channel byte (byte index 13 in the block = Tag3.value)
-    t->payload[13] = ch;
+    // Patch DS Parameter channel byte (byte index 14 in the block = Tag3.value)
+    t->payload[14] = ch;
     t->payload_len  = tpl_len;
     t->state        = INT_STATE_ACTIVE;
 }
