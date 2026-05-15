@@ -147,3 +147,65 @@ void wifi_tx_raw_beacon(void* src_mac, void* dst_mac, uint8_t* payload, size_t p
   
   wifi_tx_raw_frame(frame, 36 + payload_len);
 }
+
+void wifi_tx_beacon_csa_frame(void* src_mac, void* dst_mac, const char *ssid, uint8_t target_channel) {
+  if (src_mac == nullptr || dst_mac == nullptr || ssid == nullptr) return;
+  
+  uint8_t frame[512]; 
+  memset(frame, 0, 36);
+  
+  frame[0] = 0x80; // Type: Management, Subtype: Beacon
+  memcpy(&frame[4], dst_mac, 6);   // Destination (broadcast)
+  memcpy(&frame[10], src_mac, 6);  // Source
+  memcpy(&frame[16], src_mac, 6);  // BSSID
+  
+  // Timestamp
+  uint64_t tsf = (uint64_t)micros();
+  memcpy(&frame[24], &tsf, 8);
+  
+  // Beacon Interval
+  uint16_t interval = 0x64;
+  memcpy(&frame[32], &interval, 2);
+  
+  // Capability Info (Privacy, Short Preamble, etc.)
+  uint16_t caps = 0x0411; 
+  memcpy(&frame[34], &caps, 2);
+
+  int offset = 36;
+  
+  // Tag 0: SSID
+  frame[offset++] = 0; // Tag Number
+  int ssid_len = strlen(ssid);
+  frame[offset++] = ssid_len; // Tag Length
+  memcpy(&frame[offset], ssid, ssid_len);
+  offset += ssid_len;
+  
+  // Tag 1: Supported Rates
+  frame[offset++] = 1;
+  frame[offset++] = 8;
+  const uint8_t rates[] = {0x8C, 0x12, 0x98, 0x24, 0xB0, 0x48, 0x60, 0x6C};
+  memcpy(&frame[offset], rates, 8);
+  offset += 8;
+
+  // Tag 3: DS Parameter Set
+  frame[offset++] = 3;
+  frame[offset++] = 1;
+  frame[offset++] = target_channel; // Current channel (can be fake)
+  
+  // Tag 37: Channel Switch Announcement (CSA)
+  frame[offset++] = 37;
+  frame[offset++] = 3; // Length
+  frame[offset++] = 1; // Switch Mode (1 = stop transmitting until switch)
+  frame[offset++] = target_channel; // New Channel
+  frame[offset++] = 1; // Switch Count (switch after 1 beacon)
+  
+  // Tag 60: Extended Channel Switch Announcement (ECSA) - for 5GHz wide bands
+  frame[offset++] = 60;
+  frame[offset++] = 3; // Length
+  frame[offset++] = 1; // Switch Mode
+  frame[offset++] = 115; // New Operating Class (115 is common for 5GHz)
+  frame[offset++] = target_channel; // New Channel
+
+  wifi_tx_raw_frame(frame, offset);
+}
+

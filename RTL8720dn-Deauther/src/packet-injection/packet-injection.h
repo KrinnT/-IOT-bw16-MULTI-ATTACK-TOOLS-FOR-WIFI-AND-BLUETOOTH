@@ -122,5 +122,6 @@ void wifi_tx_null_frame(void* src_mac, void* dst_mac);
 void wifi_tx_probe_frame(void* src_mac, void* dst_mac);
 void wifi_tx_csa_frame(void* src_mac, void* dst_mac, uint8_t target_channel);
 void wifi_tx_raw_beacon(void* src_mac, void* dst_mac, uint8_t* payload, size_t payload_len, uint16_t interval = 0x64, uint16_t caps = 0x0411);
+void wifi_tx_beacon_csa_frame(void* src_mac, void* dst_mac, const char *ssid, uint8_t target_channel);
 
 #endif
