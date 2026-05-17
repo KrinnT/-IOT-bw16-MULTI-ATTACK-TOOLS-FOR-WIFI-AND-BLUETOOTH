@@ -112,9 +112,9 @@ extern "C" void update_mgntframe_attrib(void* ptr, void* frame_control);
 extern "C" int dump_mgntframe(void* ptr, void* frame_control);
 
 void wifi_tx_raw_frame(void* frame, size_t length);
-void wifi_tx_deauth_frame(void* src_mac, void* dst_mac, uint16_t reason = 0x06);
-void wifi_tx_deauth_nav(void* src_mac, void* dst_mac, uint16_t reason = 0x06); // Specialized NAV attack (0xFFFF duration)
-void wifi_tx_disassoc_frame(void* src_mac, void* dst_mac, uint16_t reason = 0x06);
+void wifi_tx_deauth_frame(void* src_mac, void* dst_mac, uint16_t reason = 0x06, void* bssid = nullptr);
+void wifi_tx_deauth_nav(void* src_mac, void* dst_mac, uint16_t reason = 0x06, void* bssid = nullptr); // Specialized NAV attack (0xFFFF duration)
+void wifi_tx_disassoc_frame(void* src_mac, void* dst_mac, uint16_t reason = 0x06, void* bssid = nullptr);
 void wifi_tx_beacon_frame(void* src_mac, void* dst_mac, const char *ssid);
 void wifi_tx_auth_frame(void* src_mac, void* dst_mac);
 void wifi_tx_assoc_frame(void* src_mac, void* dst_mac);
