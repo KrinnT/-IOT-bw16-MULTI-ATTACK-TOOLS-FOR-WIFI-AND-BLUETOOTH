@@ -10,6 +10,7 @@ namespace std { using ::rand; using ::Rand; }
 #include "src/packet-injection/packet-injection.h"
 #include "src/interference/interference.h"
 #include "src/spammer/spammer.h"
+#include "src/oled/oled_display.h"
 #include "wifi_util.h"
 #include "wifi_structures.h"
 #include "debug.h"
@@ -373,9 +374,17 @@ void setup() {
   pinMode(LED_B, OUTPUT);
 
   DEBUG_SER_INIT();
+
+  // === OLED: Boot splash ===
+  oled_init();
+  oled_show_boot();
+  delay(1500);
+
   String ap_ch = String(current_channel);
   WiFi.apbegin(ssid, pass, (char *)ap_ch.c_str());
 
+  // === OLED: Scanning screen ===
+  oled_show_scanning();
   scanNetworks();
 
 #ifdef DEBUG
@@ -391,6 +400,16 @@ void setup() {
 #endif
 
   server.begin();
+
+  // === OLED: Idle/Ready screen with AP counts ===
+  {
+    int c24 = 0, c5g = 0;
+    for (uint i = 0; i < scan_results.size(); i++) {
+      if (scan_results[i].channel <= 14) c24++;
+      else c5g++;
+    }
+    oled_show_idle(c24, c5g);
+  }
 
   if (led) {
     digitalWrite(LED_R, HIGH);
@@ -449,6 +468,8 @@ void loop() {
     
     // Give GAP stack time to transition state
     delay(100);
+
+    oled_attack_start();  // OLED: reset uptime counter
 
     while (isBLESpamming) {
         // === Build payload for this cycle ===
@@ -516,6 +537,7 @@ void loop() {
 
         sent_frames++;
         rotation++;
+        oled_show_ble_spam(bleSpamType, sent_frames);  // OLED: BLE flood HUD
         DEBUG_SER_PRINT("[BLE] Sent model_idx=" + String(model_idx) + " size=" + String(size) + "\n");
     }
 
@@ -561,9 +583,12 @@ void loop() {
     static const uint8_t csa_ghost_channels[] = {36, 40, 44, 48, 149, 153, 157, 161};
     static int csa_ghost_idx = 0;
 
+    oled_attack_start();  // OLED: reset uptime counter
+
     while (true) {
         if (isInterfering) {
             run_interference_cycle();
+            oled_show_interference(get_active_target_count(), MAX_INTERFERENCE_TARGETS);  // OLED
             if (get_interference_state() == INT_STATE_IDLE) {
                 isInterfering = false;
                 break; 
@@ -650,8 +675,14 @@ void loop() {
             }
         } 
 
+      // === OLED: Update attack HUD (throttled internally to 200ms) ===
+      if (isDeauthing) {
+          oled_show_deauth((int)deauth_channels.size(), sent_frames);
+      }
+
       if (isSpamming) {
           Spammer.run();
+          oled_show_spammer((int)spam_ssids.size());
       }
       
       // Global RTOS yield to prevent Idle Task starvation
@@ -677,7 +708,17 @@ void loop() {
       handleRoot(client);
     } else if (path == "/rescan") {
       client.write(makeRedirect("/").c_str());
+      oled_show_scanning();  // OLED: show scanning screen
       scanNetworks();
+      // OLED: update idle screen with new AP counts
+      {
+        int c24 = 0, c5g = 0;
+        for (uint i = 0; i < scan_results.size(); i++) {
+          if (scan_results[i].channel <= 14) c24++;
+          else c5g++;
+        }
+        oled_show_idle(c24, c5g);
+      }
     } else if (path == "/deauth") {
       std::vector<std::pair<String, String>> post_data = parsePost(request);
       deauth_channels.clear();
